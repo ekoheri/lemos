@@ -11,7 +11,7 @@ BIN_DIR = bin
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 TARGET = $(BIN_DIR)/lemos
-CONFIG_FILE  = config/lemos
+CONFIG_FILE  = config/lemos.conf
 
 # Flags tambahan dari pkg-config
 PKG_CFLAGS = $(shell pkg-config --cflags gtk+-3.0 webkit2gtk-4.0 libxml-2.0)
