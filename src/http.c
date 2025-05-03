@@ -14,6 +14,7 @@
 #include "../include/sha256.h"
 #include "../include/chacha20.h"
 #include "../include/pasaran.h"
+#include "../include/brotli_compression.h"
 
 extern Config config;
 
@@ -237,7 +238,7 @@ char *send_request(char *url, char *form_data, char **response_buffer, long *tot
         return "<h1>Error : Gagal membangun request HTTP!</h1>";
     }
 
-    printf("\n\nRequest to server :\n %s\n", request_buffer);
+    //printf("\n\nRequest to server :\n %s\n", request_buffer);
     if (send(sock_client, request_buffer, strlen(request_buffer), 0) < 0) {
         close(sock_client);
         free(request_buffer);
@@ -298,28 +299,46 @@ char *handle_response(char *url, char *form_data) {
     if (separator_body != NULL) {
         int header_length = separator_body - response_buffer + 4;
         body = response_buffer + header_length;
-
         ResponseHeaders headers = parse_response_headers(response_buffer);
 
-        // Untuk keperluan trace program.
-        // Jika diterapkan pada lingkungan sebenarnya, printf dihapus!
-        printf("Response from server :\n%s\n", body);
         if (headers.encrypted != NULL && strcmp(headers.encrypted, "yes") == 0) {
+            printf("After the browser has received the data\n");
+            printf("\n\nDEKOMPRESSION\nData Size Before Decompression : %ld bytes\n", strlen(body));
+
+            size_t decompressed_size;
+            char *output_str = (char *)decompress_brotli(body, &decompressed_size);  // Mendapatkan hasil dekompresi
+            if (output_str == NULL) {
+                printf("Error: Decompression failed.\n");
+                return NULL;
+            }
+
+            printf("Data Size After Decompression : %ld bytes\n", decompressed_size);
+
+            char *decoded = (char *)malloc(decompressed_size + 1);  // +1 for null terminator
+            if (decoded == NULL) {
+                printf("Error: Memory allocation for decoded failed.\n");
+                return NULL;
+            }
+
+            // Salin isi hasil dekompresi
+            memcpy(decoded, output_str, decompressed_size);
+            decoded[decompressed_size] = '\0';  // Pastikan null-terminated
+
             char *key = masehi2jawa(headers.response_time);
             char *hash_key = sha256_hash(key);
 
-            printf("\nTimes Value : %s\n", headers.response_time);
+            printf("\n\nDECRYPT\nTimes Value : %s\n", headers.response_time);
             printf("Javanese times key : %s\n", key);
             printf("Hash key : %s\n", hash_key);
 
-            char *decrypt_body = decrypt(body, hash_key, headers.content_length);
+            char *decrypt_body = decrypt(decoded, hash_key, headers.content_length);
             if (decrypt_body != NULL) {
                 strcpy(body, decrypt_body);
                 free(decrypt_body);
             } else {
                 body = "<h1>Error : Proses Dekrip GAGAL!</h1>";
             }
-
+            printf("\nPlaintext data size : %ld bytes\n\n\n", strlen(body));
             free(key);
             free(hash_key);
         }

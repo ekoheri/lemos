@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Iinclude
-LDFLAGS = $(shell pkg-config --libs gtk+-3.0 webkit2gtk-4.0 libxml-2.0) -lcurl -lm
+LDFLAGS = $(shell pkg-config --libs gtk+-3.0 webkit2gtk-4.0 libxml-2.0) -lcurl -lm  -lbrotlienc -lbrotlidec -lbrotlicommon
 
 # Direktori
 SRC_DIR = src

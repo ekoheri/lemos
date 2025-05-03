@@ -230,7 +230,7 @@ void display_html() {
 }
 
 int main(int argc, char *argv[]) {
-    load_config("javanese_browser.conf");
+    //load_config("javanese_browser.conf");
     display_html();
     return 0;
 }
